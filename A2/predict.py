@@ -58,7 +58,7 @@ def inference(device, testloader, nc, c_in, freq_cout, xfm, ifm, window,ratio_nc
         ratio_calculator.eval()
 
         criterion = torch.nn.MSELoss(reduction='none')
-        criterion2 = torch.nn.MSELoss(reduction='none')  # 也要保存测试集的error vector,便于预测anomaly score
+        criterion2 = torch.nn.MSELoss(reduction='none')  # 
         # optimizer = optim.Adam(net.parameters(), lr=0.002)
         state = torch.load(outp + 'model.pth')
 
@@ -84,15 +84,15 @@ def inference(device, testloader, nc, c_in, freq_cout, xfm, ifm, window,ratio_nc
             tstart = time.clock()
             coef = gain_coef_v2(inputs, xfm)
             normalized_coef = normalization(coef)
-            trec_inputs = netinf(inputs)  # 批训练，则输出size为(batch_size,#channel,timestep) input为（batch_size,#feature,timestep）
+            trec_inputs = netinf(inputs)  # 
             new_coef = process_coef(normalized_coef, len_list)
-            rec_coef = shape_tune(new_coef, len_list)  # 将新的系数整理成ifm可用的形式(tuple)
+            rec_coef = shape_tune(new_coef, len_list)  # 
             frec_inputs = ifm(rec_coef)
             ratio = ratio_calculator(trec_inputs, frec_inputs)
             ratio = torch.unsqueeze(ratio, dim=1)
 
             loss = (1 - ratio) * criterion(trec_inputs, targets) + ratio * criterion(frec_inputs,
-                                                                                     targets)  # 得到的是GPU上的floattensor
+                                                                                     targets)  # 
 
             loss = torch.sum(loss)
 
@@ -121,7 +121,7 @@ def inference(device, testloader, nc, c_in, freq_cout, xfm, ifm, window,ratio_nc
         real_seq=real_seq.detach().cpu().numpy()
         rec_seq=rec_seq.detach().cpu().numpy()
         ratio_array=ratio_array.detach().cpu().numpy()
-        # print(pred_loss)  # 得到的是一个值，需要进一步明确,criterion指定sum是对一个error vector的多个分量求和，此处认为应该维数=#samples,每个样本对应一个值
+        # print(pred_loss)  #
         # print(pred_loss.shape)
 
         test_stats = {
