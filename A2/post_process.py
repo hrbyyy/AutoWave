@@ -1,6 +1,5 @@
 # --coding:utf-8--
-# 按hw为分组，不同fsize时固定层数，并调整dilationrate
-# 采用的是将ts变化成回归形式的数据集，并按时间先后划分train-val-test
+
 import sys
 import torch
 import torch.nn as nn
@@ -40,18 +39,18 @@ import multiprocessing
 def combine_para(lists):
     def my_fun(list1, list2):
         return [str(i) + ',' + str(j) for i in list1 for j in
-                list2]  # 采用str形式，后续利用split得到每个元素值，如果此处包装成[i，j],则会变成[[i,j],k]形式
+                list2]  # 
 
     return reduce(my_fun, lists)
 
 
-pw = 4  # 预测步长,30,40
+pw = 4  # 
 
 
 # encoder_unit=32
 # decoder_unit=32
 # # encoder_layers=[3,4]
-# encoder_layer=1  #1至4层
+# encoder_layer=1  #
 # decoder_layer=1
 # # pred_units = [32, 64]
 # # reconstruct_units = [32, 64]
@@ -60,17 +59,17 @@ repeats = 5
 per_val2 = 97
 per_test = 718
 
-# 由于pw=3,故point_adjust时延为2
-k = 2  # point_adjust对应的delay_tolerance
+# 
+k = 2  #
 rate_threshold = 0.1
 # p0 = '/mnt/A/PycharmProject/wavelet_rec/A2/conv_inceptiony/haar/'
 # p0='/mnt/A/PycharmProject/wavelet_rec/A2/only_temporal2/window4/'
 p0='/mnt/A/PycharmProject/wavelet_rec/A2/double_inputs/8-4-1/haar/level2/'
 
 
-# 单独保存每个ts_entity的结果
+# 
 
-def compute_oldmetric(true_labels, pred_labels, indicator):  # 传入real_label和predict_label
+def compute_oldmetric(true_labels, pred_labels, indicator):  # 
 
     pred_labels = np.reshape(pred_labels, newshape=(len(pred_labels), 1))
     true_labels = np.reshape(true_labels, newshape=(len(true_labels), 1))
@@ -89,7 +88,7 @@ def compute_oldmetric(true_labels, pred_labels, indicator):  # 传入real_label�
     else:
         P = TP / (TP + FP)
         R = TP / (TP + FN)
-        F1 = 2 * P * R / (P + R)  # 尝试改用Fb(bata,定bata值)
+        F1 = 2 * P * R / (P + R)  # 
         tpr = TP / (TP + FN)
     if FP == 0:
         fpr = 0
@@ -99,7 +98,7 @@ def compute_oldmetric(true_labels, pred_labels, indicator):  # 传入real_label�
     #     rpr = 'inf'
     # else:
     #     rpr = tpr / fpr
-    # 用list of dict 初始化df,每个dict是一个记录
+    #
     # df_out = pd.DataFrame(
     #     [{'P': P, "R": R, 'F1': F1, 'FP rate': fpr, 'relative positive ratio': rpr}])
     # df_out.to_csv(outp +indicator+ 'pred_metrics.csv')
@@ -107,11 +106,11 @@ def compute_oldmetric(true_labels, pred_labels, indicator):  # 传入real_label�
 
 
 def pointlevel_threshold(average_score_list, val_label,
-                         score_indicator):  # 定义函数求threshold      传入VN2和VA的anomaly score(合为一个列表),以及val_y(list,真实0，1label,而非regression值)
-    # 原求point_score方法错误，应该用多个时刻的score均值，而非和label取法一致，将首列和末行结果拼接，只取一个时刻的值
+                         score_indicator):  # 
+    # 
 
     point_score = np.asarray(average_score_list).reshape(len(average_score_list), 1)
-    # label为真实值，取相应时刻值即可
+    # 
     label_list = val_label[:, 0].tolist()
     last_list = val_label[-1, 1:].tolist()
     label_list.extend(last_list)
@@ -127,11 +126,11 @@ def pointlevel_threshold(average_score_list, val_label,
     # val_label=np.asarray(val_label).reshape((len(val_label), 1))
     val_label = label_array.astype(int)
 
-    # 补充val_y变成sequence_label
+    #
 
     for j in range(len(candidates)):
         pred_label = np.where(score_array >= candidates[j], 1, 0)
-        # 补充pred_label变成sequence label
+        # 
         pred_label = pred_label.astype(int)
         data = np.hstack((pred_label, val_label))
         df = pd.DataFrame(data=data, columns=['pred', 'real'])
@@ -153,8 +152,8 @@ def pointlevel_threshold(average_score_list, val_label,
     # df_out.to_csv(outp+score_indicator+'_pointlevel_threshold.csv')
     return candidates[index]
 
-def seqlevel_threshold(seqas_array, val_label, outp,score_indicator): #定义函数求threshold      传入VN2和VA的anomaly score(合为一个列表),以及val_y(list,真实0，1label,而非regression值)
-  #原求point_score方法错误，应该用多个时刻的score均值，而非和label取法一致，将首列和末行结果拼接，只取一个时刻的值
+def seqlevel_threshold(seqas_array, val_label, outp,score_indicator): #
+  #
 
     candidates=sorted(seqas_array, reverse=True)
     # for i in range(len(val_score_list) - 1):
@@ -166,11 +165,11 @@ def seqlevel_threshold(seqas_array, val_label, outp,score_indicator): #定义函
     # val_label=np.asarray(val_label).reshape((len(val_label), 1))
     val_label=val_label.astype(int)
 
-    #补充val_y变成sequence_label
+    #
 
     for j in range(len(candidates)):
         pred_label=np.where(score_array>=candidates[j],1,0)
-        #补充pred_label变成sequence label
+        #
         pred_label=pred_label.astype(int)
         data=np.hstack((pred_label, val_label))
         df=pd.DataFrame(data=data,columns=['pred','real'])
@@ -183,7 +182,7 @@ def seqlevel_threshold(seqas_array, val_label, outp,score_indicator): #定义函
         else:
             P = TP / (TP + FP)
             R = TP / (TP + FN)
-            F1 = 2 * P * R / (P + R)  # 尝试改用Fb(bata,定bata值)
+            F1 = 2 * P * R / (P + R)  # 
             tpr = TP / (TP + FN)
         if FP == 0:
             fpr = 0
@@ -212,8 +211,7 @@ def post_cal(path):  #,level
 
         val2dict = pickle.load(open(outp + 'val2' + '_errslabels.pkl', 'rb'))
         val2_errvs=val2dict['error_vectors']
-        val2_labels = val2dict['true_labels']  # 从dataloader拼接而得，已经越过初始hw点
-
+        val2_labels = val2dict['true_labels']  # 
         testdict = pickle.load(open(outp + 'test' + '_errslabels.pkl', 'rb'))
         test_errvs=testdict['error_vectors']
         test_labels = testdict['true_labels']
@@ -224,7 +222,7 @@ def post_cal(path):  #,level
         test_predseqs = testdict['rec_seqs']
         test_realseqs = testdict['real_seqs']
         # test_probs = testdict['predict_probs']
-        # 拆分成原ts数目，分别求metric:
+        # 
         num_ts = len(val2_predseqs) // per_val2
 
         dfseqMAE_round = pd.DataFrame(columns=['P', 'R', 'F1', 'fpr', 'tpr'])
@@ -244,22 +242,22 @@ def post_cal(path):  #,level
             per_testlabels = test_labels[test_start:test_end, :]
             per_testerrvs=test_errvs[test_start:test_end, :,:].squeeze(axis=1)
 
-    # 原metric
-            raw_val2as = np.abs(per_val2realseq - per_val2predseq).squeeze(axis=1)  # (b,f,t) f=1,需降维。
+    # 
+            raw_val2as = np.abs(per_val2realseq - per_val2predseq).squeeze(axis=1)  # 
             raw_testas = np.abs(per_testrealseq - per_testpredseq).squeeze(axis=1)
 
-    # 原sequence metric 和mocap统一 'seqMAE'
+    # 
 
-            val2_seqas = raw_val2as.sum(axis=1).reshape(len(raw_val2as), 1)  # 保持二维形式，便于后续求metric
+            val2_seqas = raw_val2as.sum(axis=1).reshape(len(raw_val2as), 1)  # 
             test_seqas = raw_testas.sum(axis=1).reshape(len(raw_testas), 1)
 
-        # 对于逐点给出的label，要先将pointlabel化为seqlabel
+        # 
             real_val2labels = score_GAN_uts.trans_reallabel(per_val2labels, 1).reshape(len(per_val2labels), 1)
             real_testlabels = score_GAN_uts.trans_reallabel(per_testlabels, 1).reshape(len(per_testlabels), 1)
 
             seqMAEthreshold = seqlevel_threshold(val2_seqas, real_val2labels, outp, 'seqMAE')
 
-            predict_seqlabel = np.where(test_seqas >=seqMAEthreshold, 1, 0)  # 利用np.where,无需特意编写函数
+            predict_seqlabel = np.where(test_seqas >=seqMAEthreshold, 1, 0)  # 
             # real_pointlabel = score_GAN_uts.true_pointlabel(test_labels)
             p_sMAE, r_sMAE, f1_sMAE, fpr_sMAE, tpr_sMAE=compute_oldmetric(real_testlabels, predict_seqlabel, 'seqMAE')
 
