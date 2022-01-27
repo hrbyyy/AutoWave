@@ -1,4 +1,4 @@
-#参考beatGAN源代码的数据预处理。
+#code from https://github.com/Vniex/BeatGAN
 import os
 import numpy as np
 import torch
@@ -27,7 +27,7 @@ def load_data(opt):
     test_Q_dataset = None
 
     if opt.dataset=="ecg":
-        #加载preprocess.py处理的数据 #数据为(b,f,t)形式，但此时f不含label，是两路ecg信号！
+        
         N_samples=np.load(os.path.join(opt.dataroot, "N_samples.npy")) #NxCxL
         S_samples=np.load(os.path.join(opt.dataroot, "S_samples.npy"))
         V_samples = np.load(os.path.join(opt.dataroot, "V_samples.npy"))
@@ -62,22 +62,16 @@ def load_data(opt):
                 Q_samples[i][j] = normalize(Q_samples[i][j][:])
         Q_samples = Q_samples[:, :opt.nc, :]
 
-        #对每个beat给出0，1 label
-        # train / test
+       
         test_N,test_N_y, train_N,train_N_y = getFloderK(N_samples,opt.folder,0)
-        # test_S,test_S_y, train_S,train_S_y = getFloderK(S_samples, opt.folder,1)
-        # test_V,test_V_y, train_V,train_V_y = getFloderK(V_samples, opt.folder,1)
-        # test_F,test_F_y, train_F,train_F_y = getFloderK(F_samples, opt.folder,1)
-        # test_Q,test_Q_y, train_Q,train_Q_y = getFloderK(Q_samples, opt.folder,1)
+     
         test_S,test_S_y=S_samples, np.ones((S_samples.shape[0], 1))
         test_V, test_V_y = V_samples, np.ones((V_samples.shape[0], 1))
         test_F, test_F_y = F_samples, np.ones((F_samples.shape[0], 1))
         test_Q, test_Q_y = Q_samples, np.ones((Q_samples.shape[0], 1))
 
 
-        # train / val(从上方划分出的train中划分val)
-        #改为train,val1,val2,test形式。
-        #先将正常类划分为两部分，train(再分为train+val1),test(再分成val2+test)
+    
         train_N, test_N, train_N_y, test_N_y=getPercent(train_N, train_N_y, 0.5, 0)
         train_N, val1_N, train_N_y, val1_N_y = getPercent(train_N, train_N_y, 0.2, 0)
         test_N, val2_N, test_N_y, val2_N_y = getPercent(test_N, test_N_y, 0.5, 0)
@@ -94,7 +88,7 @@ def load_data(opt):
         test_data=np.concatenate([test_N,test_S,test_V,test_F,test_Q],axis=0)
         test_y=np.concatenate([test_N_y,test_S_y,test_V_y,test_F_y,test_Q_y],axis=0)
 
-        # print(train_N_y.shape)  （b,1）形式
+       
         print("train data size:{}".format(train_N.shape))
         print("val1 data size:{}".format(val1_N.shape))
         print("val2 data size:{}".format(val2_data.shape))
@@ -104,23 +98,7 @@ def load_data(opt):
         print("test V data size:{}".format(test_V.shape))
         print("test F data size:{}".format(test_F.shape))
         print("test Q data size:{}".format(test_Q.shape))
-#结果：
-# train data size:(34685, 1, 320)
-# val1 data size:(8672, 1, 320)
-# val2 data size:(27105, 1, 320)
-# test data size:(27104, 1, 320)
-# test N data size:(21679, 1, 320)
-# test S data size:(1513, 1, 320)
-# test V data size:(3504, 1, 320)
-# test F data size:(401, 1, 320)
-# test Q data size:(7, 1, 320)
 
-
-
-
-        # if not opt.istest and opt.n_aug>0:
-        #     train_N,train_N_y=data_aug(train_N,train_N_y,times=opt.n_aug)
-        #     print("after aug, train data size:{}".format(train_N.shape))
 
 
 
@@ -132,11 +110,11 @@ def load_data(opt):
         test_V_dataset = TensorDataset(torch.Tensor(test_V), torch.Tensor(test_V_y))
         test_F_dataset = TensorDataset(torch.Tensor(test_F), torch.Tensor(test_F_y))
         test_Q_dataset = TensorDataset(torch.Tensor(test_Q), torch.Tensor(test_Q_y))
-   #补充总的testset,便于衡量总结果，有的test类别batch较少，如Q类，只含13个batch
+  
         test_dataset=TensorDataset(torch.Tensor(test_data), torch.Tensor(test_y))
 
 
-    # assert (train_dataset is not None  and test_dataset is not None and val_dataset is not None)
+  
 
     dataloader = {"train": DataLoader(
                         dataset=train_dataset,  # torch TensorDataset format
