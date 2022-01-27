@@ -1,5 +1,5 @@
 # coding:--utf-8--
-#对uts,其wavelet coef送入LSTM,输出等长概率，和原coef相乘后，逆变换回ts,求mse.
+
 import sys
 import torch
 import torch.nn as nn
@@ -49,11 +49,11 @@ class A2_Ratio(nn.Module):
 
         self.ratio=nn.Sequential(self.dense1,self.activation1,self.dense2,self.activation2)
 
-    def forward(self,x1,x2):#返回单值tensor,便于和loss加权。
-        x=torch.cat([x1,x2],dim=2) #在f维度拼接
+    def forward(self,x1,x2):
+        x=torch.cat([x1,x2],dim=2) 
         relative_ratio=self.ratio(x).squeeze() #（b,f）
 
-        return relative_ratio #取数值
+        return relative_ratio 
 
 
 class A2_Reconstructor(nn.Module):
@@ -190,11 +190,11 @@ class ECG_Ratio(nn.Module):
                                    self.conv3, self.activation1, self.conv4, self.activation1,
                                    self.conv5, self.activation1, self.conv6, self.activation2)
 
-    def forward(self, x1, x2):  # 返回单值tensor,便于和loss加权。
-        x = torch.cat([x1, x2], dim=1)  # 在f维度拼接
+    def forward(self, x1, x2):  
+        x = torch.cat([x1, x2], dim=1)  
         relative_ratio=self.ratio(x).squeeze() #（b,f）
 
-        return relative_ratio #取数值
+        return relative_ratio 
 
 
 class KPI_Ratio(nn.Module):
@@ -212,11 +212,11 @@ class KPI_Ratio(nn.Module):
                                    self.conv3, self.activation1, self.conv4, self.activation1,
                                    self.conv5, self.activation2)
 
-    def forward(self, x1, x2):  # 返回单值tensor,便于和loss加权。
-        x = torch.cat([x1, x2], dim=1)  # 在f维度拼接
+    def forward(self, x1, x2):  
+        x = torch.cat([x1, x2], dim=1)  
         relative_ratio=self.ratio(x).squeeze() #（b,f）
 
-        return relative_ratio #取数值
+        return relative_ratio
 
 
 
