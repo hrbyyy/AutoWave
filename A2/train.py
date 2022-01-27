@@ -3,29 +3,26 @@ from utils import gain_coef_v2, normalization,process_coef,shape_tune
 
 def train(net, xfm, ifm, device, trainloader, ratio_calculator, epoch, losst, optimizer, len_list):
     #global losst
-    rloss = 0  # 记录每一epoch的loss,而running_loss每20批平均后置为0
-    running_loss = 0.0  # 按批求每个样本的平均loss,每批后置位0
+    rloss = 0  # 
+    running_loss = 0.0  # 
     net.train()
     ratio_calculator.train()
     criterion = torch.nn.MSELoss(reduction='none')
-    # criterion2 = torch.nn.MSELoss(reduction='none')  # 也要保存测试集的error vector,便于预测anomaly score
-    # optimizer = optim.Adam(net.parameters(), lr=0.002)
-    # with open(inp+indicator+'loader.pkl','rb') as fin:
-    #     trainloader=pickle.load(fin)
-    for i, data in enumerate(trainloader):#data[1]时 seq label(b,1)
+ 
+    for i, data in enumerate(trainloader):
 
         inputs = data[0][:,:1,:]
-        targets = inputs #先尝试data[1]＝data[0]，data[1]保存原ts,label位于最后一个feature
+        targets = inputs #
         inputs = inputs.to(device)
         targets = targets.to(device)
         optimizer.zero_grad()
 
-        # 每次喂入数据前，都需要将梯度清零
+         
         coef=gain_coef_v2(inputs,xfm)
         normalized_coef=normalization(coef)
-        trec_inputs = net(inputs)  # 批训练，则输出size为(batch_size,#channel,timestep) input为（batch_size,#feature,timestep）
+        trec_inputs = net(inputs)   
         new_coef=process_coef(normalized_coef,len_list) #(b,1,t)
-        rec_coef=shape_tune(new_coef,len_list)  #将新的系数整理成ifm可用的形式(tuple)
+        rec_coef=shape_tune(new_coef,len_list)  
         frec_inputs=ifm(rec_coef)
 
         ratio = ratio_calculator(trec_inputs, frec_inputs)
@@ -37,15 +34,12 @@ def train(net, xfm, ifm, device, trainloader, ratio_calculator, epoch, losst, op
 
         loss=(1-ratio)*loss_t+ratio*loss_f
         loss=torch.sum(loss)
-        # loss = criterion(trec_inputs, targets) + ratio * criterion(frec_inputs, targets)  # 得到的是GPU上的floattensor
-        # print(loss_t.item(),loss_f.item(),ratio.item())
-
-        # 计算loss
+      
         loss.backward()
-        # 传回反向梯度
+    
         optimizer.step()
 
-        # 梯度传回，利用优化器将参数更新
+        
         rloss += loss.item()
 
         running_loss += loss.item()
@@ -53,7 +47,7 @@ def train(net, xfm, ifm, device, trainloader, ratio_calculator, epoch, losst, op
             print('[%d, %5d] train loss: %.3f' %
                   (epoch + 1, i + 1, running_loss / 20))
             running_loss = 0.0
-    losst.append(rloss)  # 记录每轮的loss
+    losst.append(rloss)  
     torch.cuda.empty_cache()
     return losst
 
@@ -65,7 +59,7 @@ def val(net,xfm,ifm,window,ratio_calculator,device,val_loader,epoch,ep,lossv,vlo
     real_seq = torch.empty(size=(num, 1, window), device=device)
     rec_seq = torch.empty(size=(num, 1, window), device=device)
     ratio_array=torch.empty(size=(num, 1), device=device)
-    # total_ratio=0
+   
     net.eval()
     ratio_calculator.eval()
     val_loss = 0
@@ -74,49 +68,38 @@ def val(net,xfm,ifm,window,ratio_calculator,device,val_loader,epoch,ep,lossv,vlo
     # total = 0
 
     criterion = torch.nn.MSELoss(reduction='none')
-    criterion2 = torch.nn.MSELoss(reduction='none')  # 也要保存测试集的error vector,便于预测anomaly score
-    # optimizer = optim.Adam(net.parameters(), lr=0.002)
-    # batchnumber=0  #给出的threshold为每个bathch的threshold,故需记录batch数
+    criterion2 = torch.nn.MSELoss(reduction='none') 
+   
     with torch.no_grad():
-        # 因为是测试，因此禁止梯度
+       
         for batch_idx, data in enumerate(val_loader):
             start_posi = batch_idx * batchsize
             end_posi = min(num,start_posi+batchsize)
-            #取dataset,gain_coef_v2,送入网络。
-            # batchnumber+=1
-            # label = targets[:, :,-1, :].squeeze().tolist()
-            # label=data[0][:,1,:].to(device)  #(b,t)形式
+           
             label=data[0][:,1,:].to(device)
             inputs = data[0][:, :1, :]
-            targets = inputs  # 先尝试data[1]＝data[0]，data[1]保存原ts,label位于最后一个feature
+            targets = inputs  
             inputs = inputs.to(device)
             targets = targets.to(device)
 
-            # 每次喂入数据前，都需要将梯度清零
+           
             coef = gain_coef_v2(inputs, xfm)
             normalized_coef = normalization(coef)
-            trec_inputs = net(inputs)  # 批训练，则输出size为(batch_size,#channel,timestep) input为（batch_size,#feature,timestep）
+            trec_inputs = net(inputs) 
             new_coef = process_coef(normalized_coef, len_list)
-            rec_coef = shape_tune(new_coef, len_list)  # 将新的系数整理成ifm可用的形式(tuple)
+            rec_coef = shape_tune(new_coef, len_list)  
             frec_inputs = ifm(rec_coef)
             ratio = ratio_calculator(trec_inputs, frec_inputs)
-            # ratio_tensor=torch.mean(ratio,dim=0)
-            # ratio = torch.mean(ratio)
-            # total_ratio+=ratio
+          
             ratio = torch.unsqueeze(ratio, dim=1)
 
-            loss = (1-ratio)*criterion(trec_inputs, targets) + ratio * criterion(frec_inputs, targets)  # 得到的是GPU上的floattensor
+            loss = (1-ratio)*criterion(trec_inputs, targets) + ratio * criterion(frec_inputs, targets)  
 
             loss = torch.sum(loss)
 
             err=criterion2(trec_inputs,targets)
-            # err=err.detach().cpu().numpy()
-            # err=err.squeeze(2)
-            # print(err)
-            # print(err.shape)        #（128，28，1）
-            # exit()
-            # errlist.append(err)
-            val_loss += loss.item()  # val_loss每5step清零。vtotal_l每轮清零，和全局变量比较。
+         
+            val_loss += loss.item()  # 
             vtotal_l += loss.item()
             label_array[start_posi:end_posi, :] = label
             err_array[start_posi:end_posi, :, :] = err
@@ -125,12 +108,12 @@ def val(net,xfm,ifm,window,ratio_calculator,device,val_loader,epoch,ep,lossv,vlo
             ratio_array[start_posi:end_posi,:]=ratio
             if batch_idx % 20 == 19:
                 print('[%d, %5d] val loss: %.3f' %
-                      (epoch + 1, batch_idx + 1, val_loss / 20))  # 每20步（step)打印每步平均loss
+                      (epoch + 1, batch_idx + 1, val_loss / 20))  #
                 val_loss = 0
     # mean_ratio=total_ratio/len(val_loader)
 
     # acc = 100. * correct / total
-    # print("Now acc is {}".format(acc),'Now val loss is {}'.format(vtotal_l))  #打印每个epoch的acc和val loss
+    # print("Now acc is {}".format(acc),'Now val loss is {}'.format(vtotal_l)) 
     pred_error=err_array.detach().cpu().numpy()
     real_label=label_array.detach().cpu().numpy()
     real_seq = real_seq.detach().cpu().numpy()
@@ -138,13 +121,12 @@ def val(net,xfm,ifm,window,ratio_calculator,device,val_loader,epoch,ep,lossv,vlo
     ratio_array=ratio_array.detach().cpu().numpy()
     print('%d val loss: %.3f' %(epoch + 1, vtotal_l))
 
-    lossv.append(vtotal_l)  # 记录每轮val loss.不能放在函数末尾，避免early stopping退出时未记录本轮vtotal_l
+    lossv.append(vtotal_l)  # 
 
     if vtotal_l > vloss - threshold:
         counter += 1
-    else:      #只要出现比vloss小，就保存，
-                              # 避免出现vtotal_l不满足earlydropping条件而没有保存模型的情况，
-                              # 通过文件名称覆盖得到一个model,来源有两种，或earlystopping,或最小vloss。
+    else:      
+                             
         counter = 0
         vloss = vtotal_l
         state = {
@@ -152,7 +134,7 @@ def val(net,xfm,ifm,window,ratio_calculator,device,val_loader,epoch,ep,lossv,vlo
             'net_ratio': ratio_calculator.state_dict(),
             'val_loss': vtotal_l,
             # 'acc':acc,
-            'epoch': epoch + 1,  # 存储的轮数和显示的轮数统一！！
+            'epoch': epoch + 1,  
             'optimizer': optimizer.state_dict(),
             "valerr_vectors": pred_error,
             'val_label':real_label,
@@ -163,7 +145,7 @@ def val(net,xfm,ifm,window,ratio_calculator,device,val_loader,epoch,ep,lossv,vlo
 
         }
         ep = epoch
-        # torch.save(state, outp + 'epoch'+str(epoch)+'model.pth')  #val loss普遍成减小趋势，epoch已在state中保存，此处只需同名覆盖
+      
         torch.save(state, outp + 'model.pth')
 
     print(counter)
