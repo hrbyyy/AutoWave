@@ -1,5 +1,5 @@
 # coding:--utf-8--
-#对uts,其wavelet coef送入LSTM,输出等长概率，和原coef相乘后，逆变换回ts,求mse.
+#
 import sys
 import torch
 import torch.nn as nn
@@ -37,15 +37,14 @@ from pytorch_wavelets import DWT1DForward,DWT1DInverse
 import random
 
 
-def normalization(arr): #对coef进行归一化 同ts处理方法一致，均归一化至[-1，1]
+def normalization(arr): 
 
     fmin=arr.min()
     fmax=arr.max()
     result=-1+2*(arr-fmin)/(fmax-fmin)
     return result
 
-def normalization2(arr): #对coef进行归一化 同ts处理方法一致，均归一化至[-1，1]
-
+def normalization2(arr): 
     fmin=arr.min()
     fmax=arr.max()
     result=(arr-fmin)/(fmax-fmin)
@@ -56,28 +55,12 @@ def gain_coef_v2(ts_tensor, xfm):
 
     yl,yh=xfm(ts_tensor)
     coef_list=[yl]+yh
-    coef_tensor=torch.cat(coef_list,dim=2)  #在t（即len）维度拼接
-    # coef_tensor=torch.transpose(coef_tensor,1,2)  #后续LSTM model适用
-    # print(len(yh))
-    # print(yh[0].shape,yh[1].shape,yh[2].shape)  #看DWT1D系数的shape (b,f=1,t) t=len(coef)
-    # exit()
-    # total_coef=[]
-    #
-    # for i in range(ts_tensor.shape[0]):
-    #     coef_list=pywt.wavedec(ts_tensor[i, 0, :], xfm)
-    #     new_list=[x.reshape(1,len(x)) for x in coef_list]
-    #     new_array=np.concatenate(new_list,axis=1)
-    #     new_array=new_array[None,:,:]  #batch升维
-    #     total_coef.append(new_array)  #将所有系数拼接成一维array
-    # final_coef=np.concatenate(total_coef,axis=0)
-    # print(final_coef.shape)
-    # with open(outp+indicator+'coef.pkl','wb') as fc:
-    #     pickle.dump(final_coef,fc)
+    coef_tensor=torch.cat(coef_list,dim=2)  
+  
     return  coef_tensor   #(b,1,len)
 
 def shape_tune(coef_tensor,len_list):
-    #CNN不用转置
-    # coef_tensor=torch.transpose(coef_tensor,1,2) #将LSTM结果转置
+   
     yl=coef_tensor[:,:,:len_list[0]]
     yh=[]
     start_idx=len_list[0]
@@ -88,10 +71,10 @@ def shape_tune(coef_tensor,len_list):
     result=(yl,yh)
     return result
 
-def statistical_features(arr):#接收某一级的coef_arr
+def statistical_features(arr):#
 
     std = torch.std(arr, dim=2, keepdim=True)
-    energy=arr.pow(2).sum(dim=2,keepdim=True) #1080无torch.square函数
+    energy=arr.pow(2).sum(dim=2,keepdim=True) #
     # energy = torch.square(arr).sum(dim=2, keepdim=True)
     if arr.shape[2] > 2:
         dif = arr[:, :, 1:arr.shape[2]] - arr[:, :, 0:arr.shape[2] - 1]
@@ -107,10 +90,10 @@ def statistical_features(arr):#接收某一级的coef_arr
         dif_sum = torch.abs(dif).sum()
         weight = std * energy * dif_sum
     else:
-        weight = energy  # 长度为1时，无std
+        weight = energy  # 
     return weight
 
-def process_coef(coef,len_list): #接收gain_coef_v2得到的coef和每级的coef长度，根据每级的统计特征处理coef
+def process_coef(coef,len_list): #
     start_id=0
     end_id=-1
     result=torch.empty_like(coef)
@@ -120,13 +103,13 @@ def process_coef(coef,len_list): #接收gain_coef_v2得到的coef和每级的coe
         level_coef=coef[:,:,start_id:end_id]
         weight=statistical_features(level_coef)
         # weight=std*energy*dif_sum*form_factor
-        if i==0:#单独处理首个yl
+        if i==0:#
             weight/=(len(len_list)-1)
-        else:  #除以级数
+        else:  #
             weight/=i
         weight_tenor[:,:,start_id:end_id]=weight
         start_id=end_id
 
-    norm_weight=normalization2(weight_tenor)  #weight归一化至0-1,VS coef归一化至-1~1
+    norm_weight=normalization2(weight_tenor)  #
     result=coef*norm_weight
     return result
