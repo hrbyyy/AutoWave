@@ -59,14 +59,14 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc, batc
         ratio_calculator.eval()
 
         criterion = torch.nn.MSELoss(reduction='none')
-        criterion2 = torch.nn.MSELoss(reduction='none')  # 也要保存测试集的error vector,便于预测anomaly score
-        # optimizer = optim.Adam(net.parameters(), lr=0.002)
+        criterion2 = torch.nn.MSELoss(reduction='none') 
+       
         state = torch.load(outp + 'model.pth')
 
 
         netinf.load_state_dict(state['net'])
         ratio_calculator.load_state_dict(state['net_ratio'])
-        # test_x=test_x.unsqueeze(0)
+       
         torch.cuda.synchronize()
         t0 = time.clock()
         for batch_idx, data in enumerate(testloader):
@@ -74,8 +74,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc, batc
             start_posi=batch_idx*batchsize
             end_posi= min(n_samples, start_posi+batchsize)
 
-            # batchnumber+=1
-            # label = targets[:, :, -1, :].squeeze().tolist()
+           
             inputs, targets = data[0][:, :1,  :], data[1][:, :1,  :]
             label=data[0][:,1,:].to(device)
 
@@ -84,36 +83,29 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc, batc
             tstart = time.clock()
             coef = gain_coef_v2(inputs, xfm)
             normalized_coef = normalization(coef)
-            trec_inputs = netinf(inputs)  # 批训练，则输出size为(batch_size,#channel,timestep) input为（batch_size,#feature,timestep）
+            trec_inputs = netinf(inputs) 
             new_coef = process_coef(normalized_coef, len_list)  # (b,1,t)
 
-            rec_coef = shape_tune(new_coef, len_list)  # 将新的系数整理成ifm可用的形式(tuple)
+            rec_coef = shape_tune(new_coef, len_list)
             frec_inputs = ifm(rec_coef)
             ratio = ratio_calculator(trec_inputs, frec_inputs)
             ratio = torch.unsqueeze(ratio, dim=1)
-            # ratio_vector = torch.mean(ratio, dim=0)
-            # ratio = torch.mean(ratio)
-            # total_ratio += ratio
-            loss = (1-ratio)*criterion(trec_inputs, targets) + ratio * criterion(frec_inputs, targets)  # 得到的是GPU上的floattensor
+          
+            loss = (1-ratio)*criterion(trec_inputs, targets) + ratio * criterion(frec_inputs, targets)  
             loss = torch.sum(loss)
             err = criterion2(trec_inputs, targets)
             torch.cuda.synchronize()
             tend = time.clock()
             per_time=(tend-tstart)/len(inputs)
-
-
-
-            # print(start_posi,end_posi, label.shape, label_array[start_posi:end_posi,:].shape)
             label_array[start_posi:end_posi, :] = label
             err_array[start_posi:end_posi,:,:]=err
             real_seq[start_posi:end_posi,:,:]=inputs
             rec_seq[start_posi:end_posi,:,:]=trec_inputs
             ratio_array[start_posi:end_posi, :] = ratio
-            # err = err.detach().cpu().numpy()
-
+           
             pred_loss=pred_loss+loss
 
-        # mean_ratio = total_ratio / len(testloader)
+       
         torch.cuda.synchronize()
         t1 = time.clock()
         cpu_time = t1 - t0
@@ -122,8 +114,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc, batc
         real_seq=real_seq.detach().cpu().numpy()
         rec_seq=rec_seq.detach().cpu().numpy()
         ratio_array = ratio_array.detach().cpu().numpy()
-        # print(pred_loss)  # 得到的是一个值，需要进一步明确,criterion指定sum是对一个error vector的多个分量求和，此处认为应该维数=#samples,每个样本对应一个值
-        # print(pred_loss.shape)
+       
 
         test_stats = {
             "error_vectors": pred_error,
@@ -131,7 +122,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc, batc
             'real_seqs':real_seq,
             'rec_seqs':rec_seq,
             'ratio_array': ratio_array
-            # 'mean_ratio': mean_ratio
+          
         }
         pickle.dump(test_stats, open(outp + filename + '_errslabels.pkl', 'wb'))
         df = pd.DataFrame(columns=['prediction loss', 'cpu_time', 'per inference time'])
