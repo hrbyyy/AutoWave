@@ -6,32 +6,31 @@ import pickle
 names=['seqMAE']
 
 
-# hw=120
+
 window=60
-# k=3
-selected_ts=[16, 26, 27] # 16, 26, 27,21,22,,15,17,19,21,12,
-# ts_id=27
+
+selected_ts=[16, 26, 27] 
+
 wavelet_name='haar'
 n_level=2
 
 inpath='/mnt/A/PycharmProject/wavelet_rec/kpi/double_inputs/conv/window60/haar/level2/RMSprop/learning_rate0.0005/'
 
 repeats=5
-topk=3
-#
+
 for ts_id in selected_ts:
     newp=inpath+str(ts_id)
 
 
     for name in names:
         df_sta = pd.DataFrame(columns=['P', 'R', 'F1', 'FP rate', 'per inference time', 'epoch_train_time'])
-        for r in range(repeats):   #遍历10次循环
+        for r in range(repeats):  
             # newpp=newp+'/'+str(r)+'/'+'pointlevel'+'/'
             newp1=newp +'/'+ str(r) + '/'
 
-    # path=dirp+'/9units/'  #针对GRU和LSTM
+   
 
-            #只有评分方法不同，train time和inference time 相同
+          
             df_accuracy=pd.read_csv(newp1 + name+'pred_metrics.csv', header=0, index_col=0)
             df_efficiency=pd.read_csv(newp1+'test_losstime.csv',header=0,index_col=0)
             df_complexity=pd.read_csv(newp1+'epoch_train_time.csv',header=0,index_col=0)
@@ -41,14 +40,13 @@ for ts_id in selected_ts:
 
 
 
-        df_sta2=df_sta        #copy一份，便于增设标准差
+        df_sta2=df_sta        
         df_sta.loc['mean']=df_sta.apply(lambda x:x.mean())
         df_sta.loc['std']=df_sta2.apply(lambda x: x.std())
 
-        df_sta.to_csv(newp+'/'+name+'round_sta.csv')   #统计结果中第一行的值顺序不对，待解决！
+        df_sta.to_csv(newp+'/'+name+'round_sta.csv')  
 
 
-#step2：汇总不同ts的均值
 
 for name in names:
     df1=pd.DataFrame(columns=['P','R',	'F1','FP rate','per inference time','epoch_train_time'])
