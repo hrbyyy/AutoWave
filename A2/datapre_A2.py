@@ -168,7 +168,7 @@ for f in seq_ts:
     with open(test_path + ts_id + '.pkl','wb') as f4:
         pickle.dump(test, f4)
 
-#
+
 accu_set(train_path,data_outp,'train',window)
 accu_set(val1_path, data_outp, 'val1', window)
 accu_set(val2_path, data_outp, 'val2', window)
@@ -176,22 +176,4 @@ accu_set(test_path, data_outp, 'test', window)
 
 
 
-hw, train_ratio, k = 24, 0.8, 3
-train_path=train_path+'hw'+str(hw)+'/'
-test_path=test_path+'hw'+str(hw)+'/'
-if os.path.exists(train_path)==False:
-    os.mkdir(train_path,0o777)
-if os.path.exists(test_path)==False:
-    os.mkdir(test_path,0o777)
 
-pw_list = [2, 4, 6]
-for pw in pw_list:
-    outp=train_path+'pw'+str(pw)+'/'
-    outp_test=test_path+'pw'+str(pw)+'/'
-    if os.path.exists(outp)==False:
-        os.mkdir(outp,0o777)
-    if os.path.exists(outp_test)==False:
-        os.mkdir(outp_test,0o777)
-    accu_train(inpath,outp,train_path,train_ts)
-    accu_test(inpath,outp_test,val2_ts,'val2',hw,pw,k)
-    accu_test(inpath,outp_test,test_ts,'test',hw,pw,k)
