@@ -47,14 +47,7 @@ def combine_para(lists):
 pw = 4  # 
 
 
-# encoder_unit=32
-# decoder_unit=32
-# # encoder_layers=[3,4]
-# encoder_layer=1  #
-# decoder_layer=1
-# # pred_units = [32, 64]
-# # reconstruct_units = [32, 64]
-# discriminator_units=32
+
 repeats = 5
 per_val2 = 97
 per_test = 718
@@ -94,14 +87,7 @@ def compute_oldmetric(true_labels, pred_labels, indicator):  #
         fpr = 0
     else:
         fpr = FP / (FP + TN)
-    # if fpr == 0:
-    #     rpr = 'inf'
-    # else:
-    #     rpr = tpr / fpr
-    #
-    # df_out = pd.DataFrame(
-    #     [{'P': P, "R": R, 'F1': F1, 'FP rate': fpr, 'relative positive ratio': rpr}])
-    # df_out.to_csv(outp +indicator+ 'pred_metrics.csv')
+  
     return P, R, F1, fpr, tpr
 
 
@@ -143,7 +129,7 @@ def pointlevel_threshold(average_score_list, val_label,
         else:
             P = TP / (TP + FP)
             R = TP / (TP + FN)
-            F1 = 2 * P * R / (P + R)  # 尝试改用Fb(bata,定bata值)
+            F1 = 2 * P * R / (P + R)  # 
         if F1 > fmax:
             fmax = F1
             index = j
