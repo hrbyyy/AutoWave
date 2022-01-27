@@ -30,19 +30,17 @@ if os.path.exists(sta_outp)==False:
     os.mkdir(sta_outp,0o777)
 # sta_outp='/mnt/A/dataset/Yahoo A1A2/raw_sta/'
 
-# step1:统计原始每个curve的anomaly 比例
-# 选择train set curve时，不是随机选取，尽量选择anormaly占比少的
-# print(len(os.listdir(inpath)))#统计文件个数  100
+
 seq_ts=[]
 raw_aratio_dict={}
-seq_firsta_dict={}  #记录sequence anomaly 首个index=1的位置
+seq_firsta_dict={}  
 df_out=pd.DataFrame(columns=['ts_id','aratio','total','ano'])
 df_seq=pd.DataFrame(columns=['ts_id','aratio','total','ano',"first_alarm"])
 for file in os.listdir(inpath):
     if file.endswith('.csv'):
 
         ts_id=file.split('.')[0][10:]
-        df_in=pd.read_csv(inpath+file,header=0)  #注意，原始数据无index,不用index_col参数
+        df_in=pd.read_csv(inpath+file,header=0)  
         df_in['time'] = df_in['timestamp'].apply(lambda x: datetime.datetime.fromtimestamp(int(x), pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S'))
 
         raw_ano=df_in['is_anomaly'].sum()
@@ -58,27 +56,18 @@ for file in os.listdir(inpath):
 
         df_out=df_out.append({'ts_id':ts_id,'aratio':raw_aratio,'total':total,'ano':raw_ano},ignore_index=True)
 
-# df_out.sort_values('aratio',inplace=True)
-# df_out.reset_index(drop=True,inplace=True)
-# df_out.to_csv(sta_outp+'A2_aratio.csv')
-# df_seq.sort_values('first_alarm',inplace=True)
-# df_seq.reset_index(drop=True,inplace=True)
-# df_seq.to_csv(sta_outp+"A2_aseq.csv")  #记录seq_anomaly有关信息
-# with open(sta_outp+'A2_aratio.pkl','wb') as f1:
-#     pickle.dump(raw_aratio_dict,f1)
-# with open(sta_outp+'A2_aseq.pkl','wb') as f2:
-#     pickle.dump(seq_firsta_dict,f2)
+
 with open(sta_outp+'seqa_ts.pkl','wb') as f3:
     pickle.dump(seq_ts,f3)
 
 
-#step1:每个ts min_max归一化至[-1,1]
+
 def normalize(df_raw,train_points):
     fmin=df_raw.loc[:train_points,'value'].min()
     fmax=df_raw.loc[:train_points,'value'].max()
     df_raw['value']=-1+2*(df_raw['value']-fmin)/(fmax-fmin)
     return df_raw
-#step2:每个ts用linear_regression预测，减去预测值，去趋势项。
+
 def detrend(df_raw):
     x=list(range(len(df_raw)))
     y=df_raw['value'].values.tolist()
@@ -94,7 +83,7 @@ def detrend(df_raw):
     return data
 
 
-# test_split为test和val2在原ts中对应的分界点。
+
 def set_split(dd, train_points, train_ratio, test_split):
     trainp = int(train_points * train_ratio)
     train = dd[:, :trainp]
@@ -104,16 +93,12 @@ def set_split(dd, train_points, train_ratio, test_split):
     return train, val1, val2, test
 
 def shapetransform(dd, window):
-    #dd=pd.DataFrame(data=df_in.values.T,columns=df_in.index,index=df_in.columns)#df_in转置,化为（#features,#timesteps形式）
-    #需要的是数组，直接转置即可
+   
 
     dx, dy = [], []
-    # totalslot = dd.shape[1] - look_back
-    # ltrain = int(totalslot * train_ratio)
-    # lval = int(totalslot * val_ratio)
-    #以对后方注意内容调整。注意：此处range范围只适用于look_forward=1的情况，后续通用需要调整
-    for i in range(dd.shape[1] - window  + 1):  # 遍历每个样本，按时间段划分train_val_test,处理成regression变量形式
-        a = dd[:, i:i + window]  #后两行为p和alarm，转置
+  
+    for i in range(dd.shape[1] - window  + 1):  
+        a = dd[:, i:i + window] 
         b = a
         dx.append(a)
         dy.append(b)
@@ -191,48 +176,22 @@ accu_set(test_path, data_outp, 'test', window)
 
 
 
+hw, train_ratio, k = 24, 0.8, 3
+train_path=train_path+'hw'+str(hw)+'/'
+test_path=test_path+'hw'+str(hw)+'/'
+if os.path.exists(train_path)==False:
+    os.mkdir(train_path,0o777)
+if os.path.exists(test_path)==False:
+    os.mkdir(test_path,0o777)
 
-
-# #step2：选择前33条curve，去除异常后作为训练集,余下34条，便于均分val2和test：
-# df_sta=pd.read_csv(sta_outp+'A1_aratio.csv',header=0,index_col=0)
-# train_ts=df_sta.loc[:33,'ts_id'].values.tolist()
-# # test_ts=df_sta.loc[33:,'ts_id'].values.tolist()
-# val2_ts=[]
-# test_ts=[]
-# for i in range(33,len(df_sta),2):
-#     val2_ts.append(df_sta.loc[i,'ts_id'])
-#     test_ts.append(df_sta.loc[i+1,'ts_id'])  #数据特点，恰好等分，未溢出
-# with open(sta_outp+'val2_ts.pkl','wb') as fval2:
-#     pickle.dump(val2_ts,fval2)
-# with open(sta_outp+'test_ts.pkl','wb') as ftest:
-#     pickle.dump(test_ts,ftest)
-
-
-
-
-
-
-
-
-
-# hw, train_ratio, k = 48, 0.8, 3
-# train_path=train_path+'hw'+str(hw)+'/'
-# test_path=test_path+'hw'+str(hw)+'/'
-# if os.path.exists(train_path)==False:
-#     os.mkdir(train_path,0o777)
-# if os.path.exists(test_path)==False:
-#     os.mkdir(test_path,0o777)
-#
-# pw_list = [2, 4, 6]
-# for pw in pw_list:
-#     outp=train_path+'pw'+str(pw)+'/'
-#     outp_test=test_path+'pw'+str(pw)+'/'
-#     if os.path.exists(outp)==False:
-#         os.mkdir(outp,0o777)
-#     if os.path.exists(outp_test)==False:
-#         os.mkdir(outp_test,0o777)
-#     accu_train(inpath,outp,train_path,train_ts)
-#     accu_test(inpath,outp_test,val2_ts,'val2',hw,pw,k)
-#     accu_test(inpath,outp_test,test_ts,'test',hw,pw,k)
-#
-# #汇总test
+pw_list = [2, 4, 6]
+for pw in pw_list:
+    outp=train_path+'pw'+str(pw)+'/'
+    outp_test=test_path+'pw'+str(pw)+'/'
+    if os.path.exists(outp)==False:
+        os.mkdir(outp,0o777)
+    if os.path.exists(outp_test)==False:
+        os.mkdir(outp_test,0o777)
+    accu_train(inpath,outp,train_path,train_ts)
+    accu_test(inpath,outp_test,val2_ts,'val2',hw,pw,k)
+    accu_test(inpath,outp_test,test_ts,'test',hw,pw,k)
