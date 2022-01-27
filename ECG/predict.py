@@ -36,7 +36,7 @@ from model import ECG_Reconstructor,ECG_Ratio,ECG_Encoder,ECG_Decoder
 from utils import gain_coef_v2, normalization,process_coef,shape_tune
 
 
-#因对val2和test均需要inference，故增设filename选项，对保存的文件加以区分。
+#
 def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  batchsize,len_list, outp, filename):
     n_samples=len(testloader.dataset)
 
@@ -56,7 +56,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  bat
         netinf.eval()
 
         criterion = torch.nn.MSELoss(reduction='none')
-        criterion2 = torch.nn.MSELoss(reduction='none')  # 也要保存测试集的error vector,便于预测anomaly score
+        criterion2 = torch.nn.MSELoss(reduction='none') 
         # optimizer = optim.Adam(net.parameters(), lr=0.002)
         state = torch.load(outp + 'model.pth')
 
@@ -75,8 +75,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  bat
 
             start_posi=batch_idx*batchsize
             end_posi= min(n_samples, start_posi+batchsize)
-            # batchnumber+=1
-            # label = targets[:, :, -1, :].squeeze().tolist()
+          
             inputs, targets = data[0][:, :1,  :],  data[0][:, :1,  :]
             label=data[1].to(device)
             # label=data[0][:,1,:].to(device)
@@ -86,29 +85,23 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  bat
             tstart = time.clock()
             coef = gain_coef_v2(inputs, xfm)
             normalized_coef = normalization(coef)
-            trec_inputs = netinf(inputs)  # 批训练，则输出size为(batch_size,#channel,timestep) input为（batch_size,#feature,timestep）
+            trec_inputs = netinf(inputs)  
             new_coef = process_coef(normalized_coef, len_list)  # (b,1,t)
-            rec_coef = shape_tune(new_coef, len_list)  # 将新的系数整理成ifm可用的形式(tuple)
+            rec_coef = shape_tune(new_coef, len_list) 
             frec_inputs = ifm(rec_coef)
             ratio = ratio_calculator(trec_inputs, frec_inputs)
-            # ratio_vector = torch.mean(ratio, dim=0)
-            # ratio = torch.mean(ratio)
-            # total_ratio += ratio
+          
 
             ratio = torch.unsqueeze(ratio, dim=1)
             # ratio = torch.mean(ratio)
             loss = (1 - ratio) * criterion(trec_inputs, targets) + ratio * criterion(frec_inputs,targets)
-                                                                                      # 得到的是GPU上的floattensor
+                                                                                  
             loss = torch.sum(loss)
 
             err = criterion2(trec_inputs, targets)
             torch.cuda.synchronize()
             tend = time.clock()
             per_time=(tend-tstart)/len(inputs)
-
-
-
-            # print(start_posi,end_posi, label.shape, label_array[start_posi:end_posi,:].shape)
             label_array[start_posi:end_posi, :] = label
             err_array[start_posi:end_posi,:,:]=err
             real_seq[start_posi:end_posi,:,:]=inputs
@@ -117,7 +110,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  bat
             # err = err.detach().cpu().numpy()
 
             pred_loss=pred_loss+loss
-        # mean_ratio = total_ratio / len(testloader)
+      
         torch.cuda.synchronize()
         t1 = time.clock()
         cpu_time = t1 - t0
@@ -126,8 +119,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  bat
         real_seq=real_seq.detach().cpu().numpy()
         rec_seq=rec_seq.detach().cpu().numpy()
         ratio_array=ratio_array.detach().cpu().numpy()
-        # print(pred_loss)  # 得到的是一个值，需要进一步明确,criterion指定sum是对一个error vector的多个分量求和，此处认为应该维数=#samples,每个样本对应一个值
-        # print(pred_loss.shape)
+      
 
         test_stats = {
             "error_vectors": pred_error,
