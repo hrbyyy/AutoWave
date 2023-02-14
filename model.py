@@ -38,52 +38,7 @@ np.random.seed(7)
 torch.manual_seed(1)
 
 
-class A2_Ratio(nn.Module):
-    def __init__(self,window):
-        super(A2_Ratio,self).__init__()
-        self.dense1=nn.Linear(int(2*window),window)
 
-        self.activation1=nn.Tanh()
-        self.dense2=nn.Linear(window,1)
-        self.activation2=nn.Sigmoid()
-
-        self.ratio=nn.Sequential(self.dense1,self.activation1,self.dense2,self.activation2)
-
-    def forward(self,x1,x2):
-        x=torch.cat([x1,x2],dim=2) 
-        relative_ratio=self.ratio(x).squeeze() #（b,f）
-
-        return relative_ratio 
-
-
-class A2_Reconstructor(nn.Module):
-    def __init__(self, t_nc, window, c_in):
-        super(A2_Reconstructor, self).__init__()
-        dim_in=int(c_in*window)
-        dim_out=int(t_nc * window)
-        self.encoder = nn.Sequential(
-            # input is (nc) x 64
-            nn.Linear(dim_in, 2),
-            nn.Tanh(),
-            nn.Linear(2, 1),
-
-        )
-        self.decoder = nn.Sequential(
-            nn.Linear(1, 2),
-            nn.Tanh(),
-            nn.Linear(2, dim_out)
-        )
-
-
-       
-
-    def forward(self, temporal_x):
-       
-        z = self.encoder(temporal_x)
-        x_rec = self.decoder(z)
-  
-
-        return x_rec #, weight
 
 class ECG_Encoder(nn.Module):
     def __init__(self, opt):
@@ -193,71 +148,4 @@ class ECG_Ratio(nn.Module):
 
         return relative_ratio 
 
-
-class KPI_Ratio(nn.Module):
-    def __init__(self, window, ratio_nc):
-        super(KPI_Ratio, self).__init__()
-        self.conv1 = nn.Conv1d(2, ratio_nc, 4, 2, 1, bias=False)
-        self.activation1 = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv1d(ratio_nc, 2 * ratio_nc, 4, 2, 1, bias=False)
-        self.conv3 = nn.Conv1d(2 * ratio_nc, 3 * ratio_nc, 5, 3, 1, bias=False)
-        self.conv4 = nn.Conv1d(3 * ratio_nc, 4 * ratio_nc, window // 12, 1, 0, bias=False)
-        self.conv5 = nn.Conv1d(4 * ratio_nc, 1, 1, 1, 0, bias=False)
-        self.activation2 = nn.Sigmoid()
-
-        self.ratio = nn.Sequential(self.conv1, self.activation1, self.conv2, self.activation1,
-                                   self.conv3, self.activation1, self.conv4, self.activation1,
-                                   self.conv5, self.activation2)
-
-    def forward(self, x1, x2):  
-        x = torch.cat([x1, x2], dim=1)  
-        relative_ratio=self.ratio(x).squeeze() #（b,f）
-
-        return relative_ratio
-
-
-
-class KPI_Reconstructor(nn.Module):
-    def __init__(self, opt_ae,ts_cin,nc):
-        super(KPI_Reconstructor, self).__init__()
-        self.encoder = nn.Sequential(
-      
-            nn.Conv1d(opt_ae.c_in, opt_ae.freq_cout, 4, 2, 1, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
-       
-            nn.Conv1d(opt_ae.freq_cout, opt_ae.freq_cout * 2, 4, 2, 1, bias=False),
-            nn.BatchNorm1d(opt_ae.freq_cout * 2),
-            nn.LeakyReLU(0.2, inplace=True),
-         
-            nn.Conv1d(opt_ae.freq_cout * 2, opt_ae.freq_cout * 4, 5, 3, 1, bias=False),
-            nn.BatchNorm1d(opt_ae.freq_cout * 4),
-            nn.LeakyReLU(0.2, inplace=True),
-       
-
-
-
-        
-        )
-        self.decoder = nn.Sequential(
-            nn.ConvTranspose1d(4 * opt_ae.freq_cout, 2 * opt_ae.freq_cout, 5, 3, 1, bias=False),
-            nn.BatchNorm1d(opt_ae.freq_cout * 2),
-            nn.ReLU(True),
-          
-            nn.ConvTranspose1d(2 * opt_ae.freq_cout, opt_ae.freq_cout, 4, 2, 1, bias=False),
-            nn.BatchNorm1d(opt_ae.freq_cout),
-            nn.ReLU(True),
-         
-            nn.ConvTranspose1d(opt_ae.freq_cout, opt_ae.c_in, 4, 2, 1, bias=False),
-
-            nn.Tanh()
-
-        )
-
-    def forward(self, temporal_x):
-       
-        z=self.encoder(temporal_x)
-        x_rec=self.decoder(z)
-       
-
-        return x_rec
 
