@@ -276,10 +276,10 @@ class Options:
         self.dataset='ecg'
 
 datapath="/mnt/A/dataset/MIT_BIH/BGthesis_data/ano0/"
-nc=1   #input sequence channel
-folder=5  #train划分为train,val时对应的折数
+nc=1  
+folder=5 
 batchsize=64
-workers=1   #dataloader需要的参数
+workers=1  
 opt=Options(datapath,datapath,nc,folder,workers,batchsize)
 def data_wrapper():
     dataloader=load_data(opt=opt)
