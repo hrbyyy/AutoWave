@@ -28,7 +28,7 @@ inpath='/mnt/A/dataset/Yahoo A1A2/ydata-labeled-time-series-anomalies-v1_0/A2Ben
 sta_outp=inpath+'sta/'
 if os.path.exists(sta_outp)==False:
     os.mkdir(sta_outp,0o777)
-# sta_outp='/mnt/A/dataset/Yahoo A1A2/raw_sta/'
+
 
 
 seq_ts=[]
@@ -115,7 +115,7 @@ def accu_set(inp, outp, indicator, window):
         with open(inp+file,'rb') as f:
             data_in=pickle.load(f)
         x,y=shapetransform(data_in, window)
-        # if indicator=='val2' or indicator=='test':
+    
         print(indicator+' '+str(x.shape[0]))
 
         x_list.append(x)
@@ -142,7 +142,7 @@ train_path=data_outp+'train/'
 val1_path=data_outp+'val1/'
 val2_path=data_outp+'val2/'
 test_path=data_outp+'test/'
-# test_path='/mnt/A/dataset/Yahoo A1A2/test/'
+
 
 if os.path.exists(train_path)==False:
     os.mkdir(train_path,0o777)
