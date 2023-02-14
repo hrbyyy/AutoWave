@@ -100,7 +100,7 @@ def average_score_fast(score_array,pw):
             score_tt+=score_array[-1-j,j+1]
         score_tt/=num_tt
         score[tt]=score_tt
-    return list(score)   #
+    return list(score)  
  
 def average_score(score_array):
     b, s = score_array.shape
@@ -261,7 +261,7 @@ def pointlevel_threshold(average_score_list, val_label, outp,score_indicator):
     df_out.to_csv(outp+score_indicator+'_pointlevel_threshold.csv')
     return candidates[index]
 
-def compute_metric_tau(ts_num,true_labels,pred_labels,outp,indicator,k): #传入real_label和predict_label
+def compute_metric_tau(ts_num,true_labels,pred_labels,outp,indicator,k): 
 
     outp=outp+'tau'+str(k)+'/'
     if os.path.exists(outp)==False:
@@ -284,7 +284,7 @@ def compute_metric_tau(ts_num,true_labels,pred_labels,outp,indicator,k): #传入
     else:
         P = TP / (TP + FP)
         R = TP / (TP + FN)
-        F1 = 2 * P * R / (P + R)  # 尝试改用Fb(bata,定bata值)
+        F1 = 2 * P * R / (P + R) 
         tpr = TP / (TP + FN)
     if FP==0:
         fpr=0
@@ -300,7 +300,7 @@ def compute_metric_tau(ts_num,true_labels,pred_labels,outp,indicator,k): #传入
     df_out.to_csv(outp +str(ts_num)+indicator+ 'pred_metrics.csv')
     return
 
-def compute_metric(ts_num,true_labels,pred_labels,outp,indicator): #传入real_label和predict_label
+def compute_metric(ts_num,true_labels,pred_labels,outp,indicator): 
 
     pred_labels = np.reshape(pred_labels,newshape=(len(pred_labels), 1))
     true_labels = np.reshape(true_labels,newshape=(len(true_labels), 1))
