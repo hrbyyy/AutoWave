@@ -11,21 +11,21 @@ fatherpath = os.path.split(curPath)[0]
 grandpath=os.path.split(fatherpath)[0]
 greatgrandpath=os.path.split(grandpath)[0]
 gggpath=os.path.split(greatgrandpath)[0]
-# extra_path='/home/ices/PycharmProject/shape_sequence_kpi/uts/conditional_conv/model_combine/'
+
 sys.path.append(fatherpath)
 sys.path.append(curPath)
 sys.path.append(grandpath)
 sys.path.append(greatgrandpath)
 sys.path.append(gggpath)
 sys.path.append(os.path.split(gggpath)[0])
-# sys.path.append(extra_path)
+
 import numpy as np
 import pandas as pd
 import torch.optim as optim
 import torch.utils.data as Data
 from torch.optim.lr_scheduler import MultiStepLR
 import pickle
-# import matplotlib.pyplot as plt
+
 from functools import reduce
 from torch.nn import BatchNorm1d
 import time
@@ -36,7 +36,7 @@ from model import ECG_Reconstructor,ECG_Ratio,ECG_Encoder,ECG_Decoder
 from utils import gain_coef_v2, normalization,process_coef,shape_tune
 
 
-#
+
 def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  batchsize,len_list, outp, filename):
     n_samples=len(testloader.dataset)
 
@@ -46,7 +46,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  bat
     err_array=torch.empty(size=(n_samples,1,window),device=device)
     label_array=torch.empty(size=(n_samples,1),device=device)
     ratio_array = torch.empty(size=(n_samples, 1), device=device)
-    # total_ratio = 0
+    
     with torch.no_grad():
         netinf = ECG_Reconstructor(opt_ae,ts_cin,nc)
         # net = TemporalConvNet(num_inputs, num_channels)
@@ -57,7 +57,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  bat
 
         criterion = torch.nn.MSELoss(reduction='none')
         criterion2 = torch.nn.MSELoss(reduction='none') 
-        # optimizer = optim.Adam(net.parameters(), lr=0.002)
+       
         state = torch.load(outp + 'model.pth')
 
 
@@ -68,7 +68,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  bat
         ratio_calculator.eval()
         ratio_calculator.load_state_dict(state['ratio_calculator'])
 
-        # test_x=test_x.unsqueeze(0)
+     
         torch.cuda.synchronize()
         t0 = time.clock()
         for batch_idx, data in enumerate(testloader):
@@ -78,8 +78,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  bat
           
             inputs, targets = data[0][:, :1,  :],  data[0][:, :1,  :]
             label=data[1].to(device)
-            # label=data[0][:,1,:].to(device)
-
+          
             inputs, targets = inputs.to(device), targets.to(device)
             torch.cuda.synchronize()
             tstart = time.clock()
@@ -93,7 +92,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  bat
           
 
             ratio = torch.unsqueeze(ratio, dim=1)
-            # ratio = torch.mean(ratio)
+          
             loss = (1 - ratio) * criterion(trec_inputs, targets) + ratio * criterion(frec_inputs,targets)
                                                                                   
             loss = torch.sum(loss)
@@ -107,7 +106,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  bat
             real_seq[start_posi:end_posi,:,:]=inputs
             rec_seq[start_posi:end_posi,:,:]=trec_inputs
             ratio_array[start_posi:end_posi, :] = ratio
-            # err = err.detach().cpu().numpy()
+         
 
             pred_loss=pred_loss+loss
       
@@ -127,7 +126,7 @@ def inference(device, testloader, opt_ae,ts_cin,nc,xfm,ifm,window,ratio_nc,  bat
             'real_seqs':real_seq,
             'rec_seqs':rec_seq,
             'ratio_array': ratio_array
-            # 'mean_ratio': mean_ratio
+         
         }
         pickle.dump(test_stats, open(outp + filename + '_errslabels.pkl', 'wb'))
         df = pd.DataFrame(columns=['prediction loss', 'cpu_time', 'per inference time'])
