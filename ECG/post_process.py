@@ -25,7 +25,7 @@ from torch.nn import BatchNorm1d
 import time
 
 
-import score_GAN_uts
+
 
 
 
@@ -40,7 +40,7 @@ wavelet_name='haar'
 n_level=4
 repeats=5
 
-p0='/mnt/A/PycharmProject/wavelet_rec/ecg/double_inputs/conv/haar/level4/adam10.0005/epoch100/'
+p0='/.'
 
 
 def compute_oldmetric(true_labels,pred_labels,outp,indicator): 
