@@ -13,21 +13,21 @@ fatherpath = os.path.split(curPath)[0]
 grandpath=os.path.split(fatherpath)[0]
 greatgrandpath=os.path.split(grandpath)[0]
 gggpath=os.path.split(greatgrandpath)[0]
-# extra_path='/home/ices/PycharmProject/shape_sequence_kpi/uts/conditional_conv/model_combine/'
+
 sys.path.append(fatherpath)
 sys.path.append(curPath)
 sys.path.append(grandpath)
 sys.path.append(greatgrandpath)
 sys.path.append(gggpath)
 sys.path.append(os.path.split(gggpath)[0])
-# sys.path.append(extra_path)
+
 import numpy as np
 import pandas as pd
 import torch.optim as optim
 import torch.utils.data as Data
 from torch.optim.lr_scheduler import MultiStepLR
 import pickle
-# import matplotlib.pyplot as plt
+
 from functools import reduce
 from torch.nn import BatchNorm1d
 import time
@@ -36,7 +36,7 @@ import pywt
 from pytorch_wavelets import DWT1DForward,DWT1DInverse
 np.random.seed(7)
 torch.manual_seed(1)
-# import data_preparation
+
 
 class A2_Ratio(nn.Module):
     def __init__(self,window):
@@ -75,14 +75,13 @@ class A2_Reconstructor(nn.Module):
         )
 
 
-        # self.freq_tuner = Coef_Tuner(c_in, freq_cout)
+       
 
     def forward(self, temporal_x):
-        # temporal_x=temporal_x.view(temporal_x.shape[0], -1)
+       
         z = self.encoder(temporal_x)
         x_rec = self.decoder(z)
-        # weight = self.freq_tuner(wave_coef)
-        # x_rec=x_rec.view(temporal_x.shape[0], 1, -1)
+  
 
         return x_rec #, weight
 
@@ -91,29 +90,28 @@ class ECG_Encoder(nn.Module):
         super(ECG_Encoder, self).__init__()
 
         self.main = nn.Sequential(
-            # input is (nc) x 320
+           
             nn.Conv1d(opt.nc, opt.ndf, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf) x 160
+           
             nn.Conv1d(opt.ndf, opt.ndf * 2, 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt.ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*2) x 80
+
             nn.Conv1d(opt.ndf * 2, opt.ndf * 4, 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt.ndf * 4),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*4) x 40
+           
             nn.Conv1d(opt.ndf * 4, opt.ndf * 8, 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt.ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*8) x 20
+         
             nn.Conv1d(opt.ndf * 8, opt.ndf * 16, 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt.ndf * 16),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*16) x 10
-
+        
             nn.Conv1d(opt.ndf * 16, opt.nz, 10, 1, 0, bias=False),
-            # state size. (nz) x 1
+           
         )
 
     def forward(self, input):
@@ -127,30 +125,30 @@ class ECG_Decoder(nn.Module):
         super(ECG_Decoder, self).__init__()
 
         self.main=nn.Sequential(
-            # input is Z, going into a convolution
+            
             nn.ConvTranspose1d(opt.nz,opt.ngf*16,10,1,0,bias=False),
             nn.BatchNorm1d(opt.ngf*16),
             nn.ReLU(True),
-            # state size. (ngf*16) x10
+         
             nn.ConvTranspose1d(opt.ngf * 16, opt.ngf * 8, 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt.ngf * 8),
             nn.ReLU(True),
-            # state size. (ngf*8) x 20
+         
             nn.ConvTranspose1d(opt.ngf * 8, opt.ngf * 4, 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt.ngf * 4),
             nn.ReLU(True),
-            # state size. (ngf*2) x 40
+          
             nn.ConvTranspose1d(opt.ngf * 4, opt.ngf*2, 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt.ngf*2),
             nn.ReLU(True),
-            # state size. (ngf) x 80
+          
             nn.ConvTranspose1d(opt.ngf * 2, opt.ngf , 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt.ngf ),
             nn.ReLU(True),
-            # state size. (ngf) x 160
+          
             nn.ConvTranspose1d(opt.ngf, opt.nc, 4, 2, 1, bias=False),
             nn.Tanh()
-            # state size. (nc) x 320
+          
         )
 
     def forward(self, input):
@@ -165,11 +163,10 @@ class ECG_Reconstructor(nn.Module):
         self.decoder = ECG_Decoder(opt)
 
     def forward(self, temporal_x):
-        # temporal_x=temporal_x.view(temporal_x.shape[0], -1)
+       
         z=self.encoder(temporal_x)
         x_rec=self.decoder(z)
-        # weight = self.freq_tuner(wave_coef)
-        # x_rec=x_rec.view(temporal_x.shape[0], 1, -1)
+    
 
         return x_rec
 
@@ -224,33 +221,32 @@ class KPI_Reconstructor(nn.Module):
     def __init__(self, opt_ae,ts_cin,nc):
         super(KPI_Reconstructor, self).__init__()
         self.encoder = nn.Sequential(
-            # input is (nc) x 120
+      
             nn.Conv1d(opt_ae.c_in, opt_ae.freq_cout, 4, 2, 1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf) x 60
+       
             nn.Conv1d(opt_ae.freq_cout, opt_ae.freq_cout * 2, 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt_ae.freq_cout * 2),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*2) x 30
+         
             nn.Conv1d(opt_ae.freq_cout * 2, opt_ae.freq_cout * 4, 5, 3, 1, bias=False),
             nn.BatchNorm1d(opt_ae.freq_cout * 4),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*4) x 10
+       
 
 
 
-            # nn.Conv1d(opt_ae.ndf * 16, out_z, 10, 1, 0, bias=False),
-            # state size. (nz) x 1
+        
         )
         self.decoder = nn.Sequential(
             nn.ConvTranspose1d(4 * opt_ae.freq_cout, 2 * opt_ae.freq_cout, 5, 3, 1, bias=False),
             nn.BatchNorm1d(opt_ae.freq_cout * 2),
             nn.ReLU(True),
-            # state size. (ngf*16) x10
+          
             nn.ConvTranspose1d(2 * opt_ae.freq_cout, opt_ae.freq_cout, 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt_ae.freq_cout),
             nn.ReLU(True),
-            # state size. (ngf*8) x 20
+         
             nn.ConvTranspose1d(opt_ae.freq_cout, opt_ae.c_in, 4, 2, 1, bias=False),
 
             nn.Tanh()
@@ -258,10 +254,10 @@ class KPI_Reconstructor(nn.Module):
         )
 
     def forward(self, temporal_x):
-        # temporal_x=temporal_x.view(temporal_x.shape[0], -1)
+       
         z=self.encoder(temporal_x)
         x_rec=self.decoder(z)
-        # x_rec=x_rec.view(temporal_x.shape[0], 1, -1)
+       
 
         return x_rec
 
