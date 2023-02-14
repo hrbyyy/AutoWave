@@ -2,7 +2,7 @@ import torch
 from utils import gain_coef_v2, normalization,process_coef,shape_tune
 
 def train(net,xfm,ifm,device,trainloader,ratio_calculator,epoch,losst,optimizer,len_list):
-    #global losst
+  
     rloss = 0  
     running_loss = 0.0  
     net.train()
@@ -19,7 +19,7 @@ def train(net,xfm,ifm,device,trainloader,ratio_calculator,epoch,losst,optimizer,
         coef=gain_coef_v2(inputs,xfm)
         normalized_coef = normalization(coef)
         trec_inputs = net(inputs) 
-        new_coef = process_coef(normalized_coef, len_list)  # (b,1,t)
+        new_coef = process_coef(normalized_coef, len_list)  
         rec_coef=shape_tune(new_coef,len_list) 
         frec_inputs=ifm(rec_coef)
 
@@ -52,13 +52,11 @@ def val(net,xfm,ifm,window,ratio_calculator,device,val_loader,epoch,ep,lossv,vlo
     real_seq = torch.empty(size=(num, 1, window), device=device)
     rec_seq = torch.empty(size=(num, 1, window), device=device)
     ratio_array = torch.empty(size=(num, 1), device=device)
-    # total_ratio = 0
+ 
     net.eval()
     val_loss = 0
     vtotal_l = 0
-    # correct = 0
-    # total = 0
-
+ 
     criterion = torch.nn.MSELoss(reduction='none')
     criterion2 = torch.nn.MSELoss(reduction='none') 
    
