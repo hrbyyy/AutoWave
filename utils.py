@@ -13,21 +13,21 @@ fatherpath = os.path.split(curPath)[0]
 grandpath=os.path.split(fatherpath)[0]
 greatgrandpath=os.path.split(grandpath)[0]
 gggpath=os.path.split(greatgrandpath)[0]
-# extra_path='/home/ices/PycharmProject/shape_sequence_kpi/uts/conditional_conv/model_combine/'
+
 sys.path.append(fatherpath)
 sys.path.append(curPath)
 sys.path.append(grandpath)
 sys.path.append(greatgrandpath)
 sys.path.append(gggpath)
 sys.path.append(os.path.split(gggpath)[0])
-# sys.path.append(extra_path)
+
 import numpy as np
 import pandas as pd
 import torch.optim as optim
 import torch.utils.data as Data
 from torch.optim.lr_scheduler import MultiStepLR
 import pickle
-# import matplotlib.pyplot as plt
+
 from functools import reduce
 from torch.nn import BatchNorm1d
 import time
@@ -71,11 +71,11 @@ def shape_tune(coef_tensor,len_list):
     result=(yl,yh)
     return result
 
-def statistical_features(arr):#
+def statistical_features(arr):
 
     std = torch.std(arr, dim=2, keepdim=True)
-    energy=arr.pow(2).sum(dim=2,keepdim=True) #
-    # energy = torch.square(arr).sum(dim=2, keepdim=True)
+    energy=arr.pow(2).sum(dim=2,keepdim=True)
+  
     if arr.shape[2] > 2:
         dif = arr[:, :, 1:arr.shape[2]] - arr[:, :, 0:arr.shape[2] - 1]
         dif_second = dif[:, :, 1:dif.shape[2]] - dif[:, :, dif.shape[2] - 1]
@@ -90,10 +90,10 @@ def statistical_features(arr):#
         dif_sum = torch.abs(dif).sum()
         weight = std * energy * dif_sum
     else:
-        weight = energy  # 
+        weight = energy  
     return weight
 
-def process_coef(coef,len_list): #
+def process_coef(coef,len_list):
     start_id=0
     end_id=-1
     result=torch.empty_like(coef)
@@ -102,14 +102,14 @@ def process_coef(coef,len_list): #
         end_id=start_id+len_list[i]
         level_coef=coef[:,:,start_id:end_id]
         weight=statistical_features(level_coef)
-        # weight=std*energy*dif_sum*form_factor
-        if i==0:#
+     
+        if i==0:
             weight/=(len(len_list)-1)
-        else:  #
+        else: 
             weight/=i
         weight_tenor[:,:,start_id:end_id]=weight
         start_id=end_id
 
-    norm_weight=normalization2(weight_tenor)  #
+    norm_weight=normalization2(weight_tenor)  
     result=coef*norm_weight
     return result
