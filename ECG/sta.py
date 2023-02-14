@@ -12,7 +12,7 @@ n_level=4
 
 window=320
 
-inpath='/mnt/A/PycharmProject/wavelet_rec/ecg/double_inputs/conv/haar/level4/adam10.0005/epoch100/' #window320/
+inpath='/mnt/A/PycharmProject/wavelet_rec/ecg/double_inputs/conv/haar/level4/adam10.0005/epoch100/' 
 repeats=5
 
 newp=inpath
