@@ -13,21 +13,21 @@ fatherpath = os.path.split(curPath)[0]
 grandpath=os.path.split(fatherpath)[0]
 greatgrandpath=os.path.split(grandpath)[0]
 gggpath=os.path.split(greatgrandpath)[0]
-# extra_path='/home/ices/PycharmProject/shape_sequence_kpi/uts/conditional_conv/model_combine/'
+
 sys.path.append(fatherpath)
 sys.path.append(curPath)
 sys.path.append(grandpath)
 sys.path.append(greatgrandpath)
 sys.path.append(gggpath)
 sys.path.append(os.path.split(gggpath)[0])
-# sys.path.append(extra_path)
+
 import numpy as np
 import pandas as pd
 import torch.optim as optim
 import torch.utils.data as Data
 from torch.optim.lr_scheduler import MultiStepLR
 import pickle
-# import matplotlib.pyplot as plt
+
 from functools import reduce
 from torch.nn import BatchNorm1d
 import time
@@ -77,15 +77,7 @@ def form_dataloader(batchsize,inpath):
     val2loader = Data.DataLoader(dataset=val2data, shuffle=False, batch_size=batchsize)
     testdata = Data.TensorDataset(test_x, test_x)
     testloader = Data.DataLoader(dataset=testdata, shuffle=False, batch_size=batchsize)
-    # with open(inpath + 'trainloader.pkl', 'wb') as f7:
-    #     pickle.dump(trainloader, f7, protocol=4)
-    # with open(inpath +  'val1loader.pkl', 'wb') as f8:
-    #     pickle.dump(val1loader, f8, protocol=4)
-    # with open(inpath +  'val2loader.pkl', 'wb') as f9:
-    #     pickle.dump(val2loader, f9, protocol=4)
-    # with open(inpath +  'testloader.pkl', 'wb') as f10:
-    #     pickle.dump(testloader, f10, protocol=4)
-    # return  train_x,val1_x,val2_x,test_x
+    
     return trainloader,val1loader,val2loader,testloader
 
 class Options:
@@ -102,8 +94,7 @@ if __name__ == "__main__":
 
     repeats = 5
     epoch_list=[100]  #,10,20,40,60,80
-    # epoches = 10  
-
+  
     d_clip = 0.01
 
     os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
@@ -123,8 +114,7 @@ if __name__ == "__main__":
     wavelet_name = 'haar'
     wavelet = pywt.Wavelet('haar')
     wavelet_len = wavelet.dec_len  # 2
-    # print(len(morl))
-    # n_level = pywt.dwt_max_level(window, wavelet.dec_len)  # 6
+    
     n_level=4   
     xfm = DWT1DForward(J=n_level,wave='haar').cuda()
     ifm=DWT1DInverse(wave='haar').cuda()
@@ -143,9 +133,7 @@ if __name__ == "__main__":
     len_list=[cur_len]+len_list    
     total_len+=cur_len   
     print(total_len)   
-    # len_list.append(cur_len)  
-    # len_list.reverse()  
-    # input_feature=len(scale_list)
+  
   
     ts_cin=1
     nc=4  
