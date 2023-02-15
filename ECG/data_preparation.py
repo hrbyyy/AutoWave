@@ -28,7 +28,7 @@ def load_data(opt):
 
     if opt.dataset=="ecg":
         
-        N_samples=np.load(os.path.join(opt.dataroot, "N_samples.npy")) #NxCxL
+        N_samples=np.load(os.path.join(opt.dataroot, "N_samples.npy")) #(N,C,L)
         S_samples=np.load(os.path.join(opt.dataroot, "S_samples.npy"))
         V_samples = np.load(os.path.join(opt.dataroot, "V_samples.npy"))
         F_samples = np.load(os.path.join(opt.dataroot, "F_samples.npy"))
